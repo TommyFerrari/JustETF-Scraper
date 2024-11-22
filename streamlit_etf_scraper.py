@@ -104,15 +104,19 @@ def scrape_etfs(url, status_placeholder):
 # Streamlit UI Configuration
 st.set_page_config(page_title="JustETF Scraper", page_icon="📊", layout="centered")
 st.title("JustETF Scraper")
-st.markdown("Enter a URL from JustETF to get ETF data in CSV format.")
+st.markdown("Enter an ETF issuer name to get their ETF data in CSV format.")
 
 # User Input
-url = st.text_input("JustETF URL:", "https://www.justetf.com/en/search.html?query=...")
+etf_issuer = st.text_input("ETF Issuer:", "iShares")
+
+# Construct the URL
+base_url = "https://www.justetf.com/it/search.html"
+url = f"{base_url}?query={etf_issuer}&search=ETFS"
 
 # Scrape Button
 if st.button("Get ETF Data"):
-    if not url.startswith("https://www.justetf.com/"):
-        st.error("Please enter a valid JustETF URL.")
+    if not etf_issuer:
+        st.error("Please enter an ETF issuer name.")
     else:
         status = st.empty()
         try:
@@ -126,7 +130,7 @@ if st.button("Get ETF Data"):
             st.download_button(
                 label="Download CSV",
                 data=csv,
-                file_name="etfs.csv",
+                file_name=f"{etf_issuer}_etfs.csv",
                 mime="text/csv",
             )
         except Exception as e:
@@ -136,9 +140,7 @@ if st.button("Get ETF Data"):
 st.markdown("""
 ---
 ### How to Use:
-1. Go to [JustETF](https://www.justetf.com/)
-2. Search for the ETFs you're interested in.
-3. Copy the URL from your browser.
-4. Paste the URL above and click "Get ETF Data".
-5. Download the CSV file.
+1. Enter an ETF issuer name (e.g., iShares, Vanguard, SPDR, etc.)
+2. Click "Get ETF Data"
+3. Download the CSV file with the results
 """)
