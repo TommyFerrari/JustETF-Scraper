@@ -62,14 +62,20 @@ def scrape_etfs(url, status_placeholder):
             status_placeholder.text(f"Found {len(rows)} rows on page {page}.")
             
             # Extract ETF data from each row
+            error_count = 0
             for row in rows:
                 try:
                     name = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) > a").text
                     isin = row.find_element(By.CSS_SELECTOR, "td:nth-child(11)").text
                     if name and isin:
                         etf_data.append({"Name": name, "ISIN": isin})
-                except Exception as e:
-                    st.write(f"Error processing row: {e}")
+                except Exception:
+                    error_count += 1
+            
+            if error_count > 0:
+                status_placeholder.text(f"Processed page {page}. Skipped {error_count} invalid rows.")
+            else:
+                status_placeholder.text(f"Processed page {page}.")
             
             # Attempt to navigate to the next page
             try:
