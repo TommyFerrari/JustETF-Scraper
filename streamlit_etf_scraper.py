@@ -12,20 +12,25 @@ import time
 import os
 
 def scrape_etfs(url, status_placeholder):
-    # Set Chrome version via environment variable
-    os.environ['CHROMEDRIVER_VERSION'] = '120.0.6099.109'
-    
     # Setup Chrome options
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-dev-tools")
     chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Initialize WebDriver
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Set up custom download path for ChromeDriver
+    os.environ['WDM_LOCAL'] = '1'
+    os.environ['WDM_SSL_VERIFY'] = '0'
+
+    # Initialize WebDriver with specific options
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager(cache_valid_range=1).install()),
+        options=chrome_options
+    )
     
     etf_data = []
     try:
