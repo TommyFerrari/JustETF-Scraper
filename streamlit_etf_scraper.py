@@ -11,12 +11,13 @@ import pandas as pd
 import time
 import os
 import tempfile
+import undetected_chromedriver as uc
 
 def scrape_etfs(url, status_placeholder):
-    # Create a temporary directory for WebDriver cache
-    cache_dir = tempfile.mkdtemp()
-    st.write(f"Using cache directory: {cache_dir}")  # Debugging line to verify directory
-
+    # Create absolute path for temporary directory
+    temp_dir = os.path.join(tempfile.gettempdir(), 'webdriver')
+    os.makedirs(temp_dir, exist_ok=True)
+    
     # Setup Chrome options
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -27,13 +28,15 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-dev-tools")
     chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Set up WebDriver Manager with custom cache directory
-    os.environ['WDM_CACHE_DIR'] = cache_dir
+    # Set up WebDriver Manager with custom cache directory and version detection
+    os.environ['WDM_LOCAL'] = '1'
+    os.environ['WDM_SSL_VERIFY'] = '0'
+    os.environ['WDM_CACHE_DIR'] = temp_dir
 
     try:
-        # Initialize WebDriver with specific ChromeType for Chromium
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
+        # Initialize WebDriver with automatic version detection
+        service = Service()
+        driver = uc.Chrome(
             options=chrome_options
         )
         
