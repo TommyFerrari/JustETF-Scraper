@@ -104,10 +104,10 @@ def scrape_etfs(url, status_placeholder):
 # Streamlit UI Configuration
 st.set_page_config(page_title="JustETF Scraper", page_icon="📊", layout="centered")
 st.title("JustETF Scraper")
-st.markdown("Enter an ETF issuer name to get their ETF data in CSV format.")
+st.markdown("Enter an ETF issuer name to get their products' names and ISINs in CSV format.")
 
 # User Input
-etf_issuer = st.text_input("ETF Issuer:", "iShares")
+etf_issuer = st.text_input("ETF Issuer:", "")
 
 # Construct the URL
 base_url = "https://www.justetf.com/it/search.html"
