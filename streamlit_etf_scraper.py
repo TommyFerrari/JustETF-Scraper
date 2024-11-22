@@ -11,7 +11,6 @@ import pandas as pd
 import time
 import os
 import tempfile
-import undetected_chromedriver as uc
 
 def scrape_etfs(url, status_placeholder):
     # Create absolute path for temporary directory
@@ -26,17 +25,11 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-tools")
-    chrome_options.binary_location = "/usr/bin/chromium"
-
-    # Set up WebDriver Manager with custom cache directory and version detection
-    os.environ['WDM_LOCAL'] = '1'
-    os.environ['WDM_SSL_VERIFY'] = '0'
-    os.environ['WDM_CACHE_DIR'] = temp_dir
 
     try:
-        # Initialize WebDriver with automatic version detection
-        service = Service()
-        driver = uc.Chrome(
+        # Initialize WebDriver with ChromeDriverManager
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
             options=chrome_options
         )
         
