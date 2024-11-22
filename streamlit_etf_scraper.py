@@ -3,7 +3,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
@@ -27,9 +26,10 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-dev-tools")
 
     try:
-        # Initialize WebDriver with specific Chrome version
+        # Initialize WebDriver using Selenium's built-in manager
+        service = Service()
         driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager(version="120.0.6051.2").install()),
+            service=service,
             options=chrome_options
         )
         
