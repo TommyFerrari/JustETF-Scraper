@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException
 import pandas as pd
 import time
@@ -19,13 +21,20 @@ st.markdown("""
 Enter a URL from JustETF to get ETF data in CSV format.
 """)
 
-def scrape_etfs(url, status_placeholder):
+# Setup Chrome options at the start
+@st.cache_resource
+def get_chrome_driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
     
-    driver = webdriver.Chrome(options=chrome_options)
+    service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service, options=chrome_options)
+
+def scrape_etfs(url, status_placeholder):
+    driver = get_chrome_driver()
     etf_data = []
     
     try:
@@ -124,3 +133,4 @@ st.markdown("""
 4. Paste it here and click "Get ETF Data"
 5. Download the CSV file
 """)
+
