@@ -17,7 +17,7 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.binary_location = "/usr/bin/chromium-browser"  # Path to Chromium
+    chrome_options.binary_location = "/usr/bin/chromium"  # Path to Chromium
 
     # Initialize WebDriver using webdriver_manager.
     service = Service(ChromeDriverManager().install())
