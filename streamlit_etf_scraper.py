@@ -27,9 +27,9 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-dev-tools")
 
     try:
-        # Initialize WebDriver with ChromeDriverManager
+        # Initialize WebDriver with specific Chrome version
         driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
+            service=Service(ChromeDriverManager(version="120.0.6099.224").install()),
             options=chrome_options
         )
         
