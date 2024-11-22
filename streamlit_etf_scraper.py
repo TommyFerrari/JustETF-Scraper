@@ -12,11 +12,42 @@ import time
 import os
 import tempfile
 
+
+The error [Errno 20] Not a directory: 'streamlit_etf_scraper.py/.wdm' typically indicates that the application is trying to use a file as if it were a directory. This can happen if the webdriver_manager is misconfigured or if the cache directory setting for webdriver_manager isn't correctly set.
+
+Issue:
+In your code, you're setting the WDM_CACHE_DIR environment variable to a directory (temp_dir) but the error suggests this value might be getting overwritten or incorrectly set.
+
+Solution:
+Fix WDM_CACHE_DIR: Ensure that WDM_CACHE_DIR is correctly set to a valid directory. Modify the temp_dir assignment to ensure it works correctly:
+
+python
+Copy code
+temp_dir = os.path.join(tempfile.gettempdir(), 'webdriver_cache')
+os.makedirs(temp_dir, exist_ok=True)
+os.environ['WDM_CACHE_DIR'] = temp_dir
+Remove Conflicting Environment Variables: Avoid setting os.environ['WDM_LOCAL'] or os.environ['WDM_SSL_VERIFY'] unless strictly necessary. These may cause unintended side effects.
+
+Update webdriver_manager: Ensure you are using the latest version of webdriver_manager as older versions may have compatibility issues.
+
+Debug Cache Issues: Add logging or a print statement to verify the actual WDM_CACHE_DIR being used:
+
+python
+Copy code
+st.write(f"WDM_CACHE_DIR: {os.environ['WDM_CACHE_DIR']}")
+Streamlit Temp Path Fix: Streamlit apps sometimes use unique execution environments where paths can get misinterpreted. To prevent such issues, ensure all paths are fully qualified and distinct.
+
+Updated Code Section:
+python
+Copy code
 def scrape_etfs(url, status_placeholder):
-    # Create absolute path for temporary directory
-    temp_dir = os.path.join(tempfile.gettempdir(), 'webdriver')
+    # Create a unique temporary directory for WebDriver Manager
+    temp_dir = os.path.join(tempfile.gettempdir(), 'webdriver_cache')
     os.makedirs(temp_dir, exist_ok=True)
     
+    # Ensure environment variable points to this directory
+    os.environ['WDM_CACHE_DIR'] = temp_dir
+
     # Setup Chrome options
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -26,11 +57,6 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-tools")
     chrome_options.binary_location = "/usr/bin/chromium"
-
-    # Set up WebDriver Manager with custom cache directory
-    os.environ['WDM_LOCAL'] = '1'
-    os.environ['WDM_SSL_VERIFY'] = '0'
-    os.environ['WDM_CACHE_DIR'] = temp_dir
 
     try:
         # Initialize WebDriver
@@ -142,3 +168,4 @@ st.markdown("""
 4. Paste the URL above and click "Get ETF Data".
 5. Download the CSV file.
 """)
+
