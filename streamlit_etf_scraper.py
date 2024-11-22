@@ -9,8 +9,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import pandas as pd
 import time
+import os
 
 def scrape_etfs(url, status_placeholder):
+    # Set Chrome version via environment variable
+    os.environ['CHROMEDRIVER_VERSION'] = '120.0.6099.109'
+    
     # Setup Chrome options
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -19,15 +23,15 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Initialize WebDriver with specific version
-    service = Service(ChromeDriverManager(version="120.0.6099.109").install())
+    # Initialize WebDriver
+    service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     etf_data = []
     try:
         status_placeholder.text("Loading page...")
         driver.get(url)
-        time.sleep(2)  # Allow time for the page to load.
+        time.sleep(2)
         
         # Handle cookie consent.
         try:
