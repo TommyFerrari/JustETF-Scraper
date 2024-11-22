@@ -1,70 +1,53 @@
 import streamlit as st
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import pandas as pd
 import time
 
-st.set_page_config(
-    page_title="ETF Scraper",
-    page_icon="📊",
-    layout="centered"
-)
-
-st.title("JustETF Scraper")
-st.markdown("""
-Enter a URL from JustETF to get ETF data in CSV format.
-""")
-
-# Setup Chrome options at the start
-@st.cache_resource
-def get_chrome_driver():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
+def scrape_etfs(url):
+    options = Options()
+    options.add_argument("--headless")  # Run in headless mode.
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     
-    service = Service(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service, options=chrome_options)
-
-def scrape_etfs(url, status_placeholder):
-    driver = get_chrome_driver()
+    # Initialize WebDriver using webdriver_manager.
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    
     etf_data = []
-    
     try:
-        status_placeholder.write("Loading page...")
         driver.get(url)
-        time.sleep(2)
+        time.sleep(2)  # Allow time for the page to load.
         
-        # Handle cookie consent
+        # Handle cookie consent.
         try:
             cookie_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
             )
             cookie_button.click()
             time.sleep(1)
-        except:
-            status_placeholder.write("Cookie consent handled")
+        except TimeoutException:
+            st.write("No cookie consent pop-up detected or already handled.")
         
         page = 1
         while True:
-            status_placeholder.write(f"Processing page {page}")
+            st.write(f"Processing page {page}...")
             
-            # Wait for table
-            table = WebDriverWait(driver, 10).until(
+            # Wait for the ETF table to load.
+            WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "#etfsTable"))
             )
             
-            # Get rows
+            # Extract table rows.
             rows = driver.find_elements(By.CSS_SELECTOR, "#etfsTable > tbody > tr")
+            st.write(f"Found {len(rows)} rows on page {page}.")
             
-            # Process rows
+            # Extract ETF data from each row.
             for row in rows:
                 try:
                     name = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) > a").text
@@ -72,9 +55,9 @@ def scrape_etfs(url, status_placeholder):
                     if name and isin:
                         etf_data.append({"Name": name, "ISIN": isin})
                 except Exception as e:
-                    continue
+                    st.write(f"Error processing row: {e}")
             
-            # Try next page
+            # Attempt to navigate to the next page.
             try:
                 next_button = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, "#etfsTable_next"))
@@ -84,35 +67,37 @@ def scrape_etfs(url, status_placeholder):
                     time.sleep(2)
                     page += 1
                 else:
+                    st.write("No more pages available.")
                     break
             except TimeoutException:
+                st.write("No more pages available.")
                 break
-        
-        return pd.DataFrame(etf_data)
     
     finally:
         driver.quit()
+    
+    return pd.DataFrame(etf_data)
 
-# URL input
-url = st.text_input("Enter JustETF URL:", placeholder="https://www.justetf.com/en/search.html?query=...")
+# Streamlit UI Configuration
+st.set_page_config(page_title="JustETF Scraper", page_icon="📊", layout="centered")
+st.title("JustETF Scraper")
+st.markdown("Enter a URL from JustETF to get ETF data in CSV format.")
 
-if st.button("Get ETF Data", type="primary"):
+# User Input
+url = st.text_input("JustETF URL:", "https://www.justetf.com/en/search.html?query=...")
+
+# Scrape Button
+if st.button("Get ETF Data"):
     if not url.startswith("https://www.justetf.com/"):
-        st.error("Please enter a valid JustETF URL")
+        st.error("Please enter a valid JustETF URL.")
     else:
-        status = st.empty()
-        progress_bar = st.progress(0)
-        
         try:
             with st.spinner('Scraping data...'):
-                df = scrape_etfs(url, status)
-            
+                df = scrape_etfs(url)
             st.success(f"Found {len(df)} ETFs!")
-            
-            # Show preview
             st.dataframe(df)
             
-            # Download button
+            # Download Button
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="Download CSV",
@@ -120,17 +105,17 @@ if st.button("Get ETF Data", type="primary"):
                 file_name="etfs.csv",
                 mime="text/csv",
             )
-            
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
 
+# Instructions
 st.markdown("""
 ---
-### How to use:
+### How to Use:
 1. Go to [JustETF](https://www.justetf.com/)
-2. Search for the ETFs you want
-3. Copy the URL from your browser
-4. Paste it here and click "Get ETF Data"
-5. Download the CSV file
+2. Search for the ETFs you're interested in.
+3. Copy the URL from your browser.
+4. Paste the URL above and click "Get ETF Data".
+5. Download the CSV file.
 """)
 
