@@ -1,4 +1,4 @@
+selenium>=4.26.0  # Ensure we have the version with built-in Selenium Manager
 streamlit
-selenium==4.26.0
 pandas
-webdriver-manager==3.8.6
+# Remove webdriver-manager if it's there, as we don't need it anymore
