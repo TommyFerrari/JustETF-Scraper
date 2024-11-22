@@ -10,87 +10,91 @@ from selenium.common.exceptions import TimeoutException
 import pandas as pd
 import time
 import os
+import tempfile
 
 def scrape_etfs(url, status_placeholder):
-    # Setup Chrome options
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-dev-tools")
-    chrome_options.binary_location = "/usr/bin/chromium"
+    # Create a temporary directory for WebDriver
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        # Setup Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-dev-tools")
+        chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Set up custom download path for ChromeDriver
-    os.environ['WDM_LOCAL'] = '1'
-    os.environ['WDM_SSL_VERIFY'] = '0'
+        # Set up WebDriver Manager with custom cache directory
+        os.environ['WDM_LOCAL'] = '1'
+        os.environ['WDM_SSL_VERIFY'] = '0'
+        os.environ['WDM_CACHE_DIR'] = tmpdirname
 
-    # Initialize WebDriver with specific options
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager(cache_valid_range=1).install()),
-        options=chrome_options
-    )
-    
-    etf_data = []
-    try:
-        status_placeholder.text("Loading page...")
-        driver.get(url)
-        time.sleep(2)
+        # Initialize WebDriver
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=chrome_options
+        )
         
-        # Handle cookie consent.
+        etf_data = []
         try:
-            cookie_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
-            )
-            cookie_button.click()
-            time.sleep(1)
-        except TimeoutException:
-            status_placeholder.text("No cookie consent pop-up detected or already handled.")
-        
-        page = 1
-        while True:
-            status_placeholder.text(f"Processing page {page}...")
+            status_placeholder.text("Loading page...")
+            driver.get(url)
+            time.sleep(2)
             
-            # Wait for the ETF table to load.
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "#etfsTable"))
-            )
-            
-            # Extract table rows.
-            rows = driver.find_elements(By.CSS_SELECTOR, "#etfsTable > tbody > tr")
-            status_placeholder.text(f"Found {len(rows)} rows on page {page}.")
-            
-            # Extract ETF data from each row.
-            for row in rows:
-                try:
-                    name = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) > a").text
-                    isin = row.find_element(By.CSS_SELECTOR, "td:nth-child(11)").text
-                    if name and isin:
-                        etf_data.append({"Name": name, "ISIN": isin})
-                except Exception as e:
-                    st.write(f"Error processing row: {e}")
-            
-            # Attempt to navigate to the next page.
+            # Handle cookie consent
             try:
-                next_button = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#etfsTable_next"))
+                cookie_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
                 )
-                if 'disabled' not in next_button.get_attribute('class'):
-                    next_button.click()
-                    time.sleep(2)
-                    page += 1
-                else:
+                cookie_button.click()
+                time.sleep(1)
+            except TimeoutException:
+                status_placeholder.text("No cookie consent pop-up detected or already handled.")
+            
+            page = 1
+            while True:
+                status_placeholder.text(f"Processing page {page}...")
+                
+                # Wait for the ETF table to load
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "#etfsTable"))
+                )
+                
+                # Extract table rows
+                rows = driver.find_elements(By.CSS_SELECTOR, "#etfsTable > tbody > tr")
+                status_placeholder.text(f"Found {len(rows)} rows on page {page}.")
+                
+                # Extract ETF data from each row
+                for row in rows:
+                    try:
+                        name = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) > a").text
+                        isin = row.find_element(By.CSS_SELECTOR, "td:nth-child(11)").text
+                        if name and isin:
+                            etf_data.append({"Name": name, "ISIN": isin})
+                    except Exception as e:
+                        st.write(f"Error processing row: {e}")
+                
+                # Attempt to navigate to the next page
+                try:
+                    next_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, "#etfsTable_next"))
+                    )
+                    if 'disabled' not in next_button.get_attribute('class'):
+                        next_button.click()
+                        time.sleep(2)
+                        page += 1
+                    else:
+                        status_placeholder.text("No more pages available.")
+                        break
+                except TimeoutException:
                     status_placeholder.text("No more pages available.")
                     break
-            except TimeoutException:
-                status_placeholder.text("No more pages available.")
-                break
-    
-    finally:
-        driver.quit()
-    
-    return pd.DataFrame(etf_data)
+        
+        finally:
+            driver.quit()
+        
+        return pd.DataFrame(etf_data)
 
 # Streamlit UI Configuration
 st.set_page_config(page_title="JustETF Scraper", page_icon="📊", layout="centered")
@@ -133,3 +137,4 @@ st.markdown("""
 4. Paste the URL above and click "Get ETF Data".
 5. Download the CSV file.
 """)
+
