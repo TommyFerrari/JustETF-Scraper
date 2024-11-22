@@ -13,10 +13,10 @@ import os
 import tempfile
 
 def scrape_etfs(url, status_placeholder):
-    # Create a fixed directory for WebDriver cache
-    cache_dir = os.path.join(tempfile.gettempdir(), 'webdriver_cache')
-    os.makedirs(cache_dir, exist_ok=True)
-    
+    # Create a temporary directory for WebDriver cache
+    cache_dir = tempfile.mkdtemp()
+    st.write(f"Using cache directory: {cache_dir}")  # Debugging line to verify directory
+
     # Setup Chrome options
     chrome_options = Options()
     chrome_options.add_argument("--headless")
