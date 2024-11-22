@@ -10,17 +10,22 @@ from selenium.common.exceptions import TimeoutException
 import pandas as pd
 import time
 
-def scrape_etfs(url):
-    options = Options()
-    options.add_argument("--headless")  # Run in headless mode.
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    
+def scrape_etfs(url, status_placeholder):
+    # Setup Chrome options
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run in headless mode.
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.binary_location = "/usr/bin/chromium-browser"  # Path to Chromium
+
     # Initialize WebDriver using webdriver_manager.
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     
     etf_data = []
     try:
+        status_placeholder.text("Loading page...")
         driver.get(url)
         time.sleep(2)  # Allow time for the page to load.
         
@@ -32,11 +37,11 @@ def scrape_etfs(url):
             cookie_button.click()
             time.sleep(1)
         except TimeoutException:
-            st.write("No cookie consent pop-up detected or already handled.")
+            status_placeholder.text("No cookie consent pop-up detected or already handled.")
         
         page = 1
         while True:
-            st.write(f"Processing page {page}...")
+            status_placeholder.text(f"Processing page {page}...")
             
             # Wait for the ETF table to load.
             WebDriverWait(driver, 10).until(
@@ -45,7 +50,7 @@ def scrape_etfs(url):
             
             # Extract table rows.
             rows = driver.find_elements(By.CSS_SELECTOR, "#etfsTable > tbody > tr")
-            st.write(f"Found {len(rows)} rows on page {page}.")
+            status_placeholder.text(f"Found {len(rows)} rows on page {page}.")
             
             # Extract ETF data from each row.
             for row in rows:
@@ -67,10 +72,10 @@ def scrape_etfs(url):
                     time.sleep(2)
                     page += 1
                 else:
-                    st.write("No more pages available.")
+                    status_placeholder.text("No more pages available.")
                     break
             except TimeoutException:
-                st.write("No more pages available.")
+                status_placeholder.text("No more pages available.")
                 break
     
     finally:
@@ -91,9 +96,10 @@ if st.button("Get ETF Data"):
     if not url.startswith("https://www.justetf.com/"):
         st.error("Please enter a valid JustETF URL.")
     else:
+        status = st.empty()
         try:
             with st.spinner('Scraping data...'):
-                df = scrape_etfs(url)
+                df = scrape_etfs(url, status)
             st.success(f"Found {len(df)} ETFs!")
             st.dataframe(df)
             
@@ -118,4 +124,3 @@ st.markdown("""
 4. Paste the URL above and click "Get ETF Data".
 5. Download the CSV file.
 """)
-
