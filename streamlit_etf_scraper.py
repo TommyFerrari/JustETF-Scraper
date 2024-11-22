@@ -13,9 +13,8 @@ import os
 import tempfile
 
 def scrape_etfs(url, status_placeholder):
-    # Create absolute path for temporary directory
-    temp_dir = os.path.join(tempfile.gettempdir(), 'webdriver')
-    os.makedirs(temp_dir, exist_ok=True)
+    # Create a temporary directory for WebDriver cache
+    temp_dir = tempfile.mkdtemp()
     
     # Setup Chrome options
     chrome_options = Options()
