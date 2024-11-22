@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.utils import ChromeType
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
@@ -20,7 +21,7 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.binary_location = "/usr/bin/chromium"  # Path to Chromium
 
     # Initialize WebDriver using webdriver_manager.
-    service = Service(ChromeDriverManager().install())
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     etf_data = []
@@ -124,3 +125,4 @@ st.markdown("""
 4. Paste the URL above and click "Get ETF Data".
 5. Download the CSV file.
 """)
+
