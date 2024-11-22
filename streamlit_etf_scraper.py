@@ -13,8 +13,9 @@ import os
 import tempfile
 
 def scrape_etfs(url, status_placeholder):
-    # Create a temporary directory for WebDriver cache
-    temp_dir = tempfile.mkdtemp()
+    # Create a fixed directory for WebDriver cache
+    cache_dir = os.path.join(tempfile.gettempdir(), 'webdriver_cache')
+    os.makedirs(cache_dir, exist_ok=True)
     
     # Setup Chrome options
     chrome_options = Options()
@@ -27,9 +28,7 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.binary_location = "/usr/bin/chromium"
 
     # Set up WebDriver Manager with custom cache directory
-    os.environ['WDM_LOCAL'] = '1'
-    os.environ['WDM_SSL_VERIFY'] = '0'
-    os.environ['WDM_CACHE_DIR'] = temp_dir
+    os.environ['WDM_CACHE_DIR'] = cache_dir
 
     try:
         # Initialize WebDriver
