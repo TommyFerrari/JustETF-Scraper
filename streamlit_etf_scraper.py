@@ -19,8 +19,8 @@ def scrape_etfs(url, status_placeholder):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Initialize WebDriver
-    service = Service(ChromeDriverManager().install())
+    # Initialize WebDriver with specific version
+    service = Service(ChromeDriverManager(version="120.0.6099.109").install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     etf_data = []
@@ -124,5 +124,3 @@ st.markdown("""
 4. Paste the URL above and click "Get ETF Data".
 5. Download the CSV file.
 """)
-
-
