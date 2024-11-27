@@ -67,8 +67,14 @@ def scrape_etfs(url, status_placeholder):
                 try:
                     name = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) > a").text
                     isin = row.find_element(By.CSS_SELECTOR, "td:nth-child(11)").text
+                    try:
+                        # Try to extract AuM; set to None if not available
+                        aum = row.find_element(By.CSS_SELECTOR, "td:nth-child(8)").text
+                    except Exception:
+                        aum = None  # Handle missing or invalid AuM
+
                     if name and isin:
-                        etf_data.append({"Name": name, "ISIN": isin})
+                        etf_data.append({"Name": name, "ISIN": isin, "AuM": aum})
                 except Exception:
                     error_count += 1
             
